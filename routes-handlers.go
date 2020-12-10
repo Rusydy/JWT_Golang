@@ -40,7 +40,7 @@ func SignInUser(response http.ResponseWriter, request *http.Request) {
 		errorResponse.Code = http.StatusBadRequest
 		if loginRequest.Email == "" {
 			errorResponse.Message = "Name can't be empty"
-			// it's actually Last Name can't empty, but maybe I'll change my mind
+			// it's 'actually Last Name can't empty', but maybe I'll change my mind later
 			returnErrorResponse(response, request, errorResponse)
 		} else if loginRequest.Password == "" {
 			errorResponse.Message = "Password can't be empty"

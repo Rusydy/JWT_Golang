@@ -3,7 +3,7 @@ module JWT_Auth_GO
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.36.4 // indirect
+	github.com/aws/aws-sdk-go v1.36.5 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
