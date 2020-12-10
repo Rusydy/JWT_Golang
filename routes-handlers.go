@@ -4,10 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+func returnErrorResponse(response http.ResponseWriter, request *http.Request, errorMessage ErrorResponse) {
+	httpResponse := &ErrorResponse{Code: errorMessage.Code, Message: errorMessage.Message}
+	jsonResponse, err := json.Marshal(httpResponse)
+	if err != nil {
+		panic(err)
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(errorMessage.Code)
+	response.Write(jsonResponse)
+}
 
 // SignInUser Used for Signin In the Users
 func SignInUser(response http.ResponseWriter, request *http.Request) {
@@ -76,8 +89,8 @@ func SignInUser(response http.ResponseWriter, request *http.Request) {
 	}
 }
 
-// SingUpUser Used for Singin up the User
-func SingUpUser(response http.ResponseWriter, request *http.Request) {
+// SignUpUser Used for Singin up the User
+func SignUpUser(response http.ResponseWriter, request *http.Request) {
 	var registrationRequest RegistrationParams
 	var errorResponse = ErrorResponse{
 		Code: http.StatusInternalServerError, Message: "Internal Server Error",
@@ -106,6 +119,84 @@ func SingUpUser(response http.ResponseWriter, request *http.Request) {
 			if tokenString == "" {
 				returnErrorResponse(response, request, errorResponse)
 			}
+
+			var registrationResponse = SuccessfulLoginResponse{
+				AuthToken: tokenString,
+				Email:     registrationRequest.Email,
+			}
+
+			collection := Client.Database("test").Collection("users")
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			_, databaseErr := collection.InsertOne(ctx, bson.M{
+				"name":     registrationRequest.Name,
+				"email":    registrationRequest.Email,
+				"password": registrationRequest.Password,
+			})
+			defer cancel()
+
+			if databaseErr != nil {
+				returnErrorResponse(response, request, errorResponse)
+			}
+
+			var successResponse = SuccessResponse{
+				Code:     http.StatusOK,
+				Message:  "You are registered, login again",
+				Response: registrationResponse,
+			}
+
+			successJSONResponse, jsonError := json.Marshal(successResponse)
+
+			if jsonError != nil {
+				returnErrorResponse(response, request, errorResponse)
+			}
+
+			response.Header().Set("Content-Type", "application/json")
+			response.WriteHeader(successResponse.Code)
+			response.Write(successJSONResponse)
+		}
+	}
+}
+
+// GetUserDetails used for getting the user details using user token
+func GetUserDetails(response http.ResponseWriter, request *http.Request) {
+	var result UserDetails
+	var errorResponse = ErrorResponse{
+		Code: http.StatusInternalServerError, Message: "Internal Server Error",
+	}
+
+	bearerToken := request.Header.Get("Authorization")
+	var authorizationToken = strings.Split(bearerToken, " ")[1] //?
+
+	email, _ := VerifyToken(authorizationToken)
+
+	if email == "" {
+		returnErrorResponse(response, request, errorResponse)
+	} else {
+		collection := Client.Database("test").Collection("users")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var err = collection.FindOne(ctx, bson.M{
+			"email": email,
+		}).Decode(&result)
+
+		defer cancel()
+
+		if err != nil {
+			returnErrorResponse(response, request, errorResponse)
+		} else {
+			var successResponse = SuccessResponse{
+				Code:     http.StatusOK,
+				Message:  "You're logged in successfully",
+				Response: result.Name,
+			}
+
+			successJSONResponse, jsonError := json.Marshal(successResponse)
+
+			if jsonError != nil {
+				returnErrorResponse(response, request, errorResponse)
+			}
+
+			response.Header().Set("Content-Type", "application/json")
+			response.Write(successJSONResponse)
 		}
 	}
 }
