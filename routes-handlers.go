@@ -84,4 +84,28 @@ func SingUpUser(response http.ResponseWriter, request *http.Request) {
 	}
 
 	decoder := json.NewDecoder(request.Body)
+	decoderErr := decoder.Decode(&registrationRequest)
+	defer request.Body.Close()
+
+	if decoderErr != nil {
+		returnErrorResponse(response, request, errorResponse)
+	} else {
+		errorResponse.Code = http.StatusBadRequest
+		if registrationRequest.Name == "" {
+			errorResponse.Message = "Name can't be empty"
+			returnErrorResponse(response, request, errorResponse)
+		} else if registrationRequest.Email == "" {
+			errorResponse.Message = "Email can't be empty"
+			returnErrorResponse(response, request, errorResponse)
+		} else if registrationRequest.Password == "" {
+			errorResponse.Message = "Password can't be empty"
+			returnErrorResponse(response, request, errorResponse)
+		} else {
+			tokenString, _ := CreateJWT(registrationRequest.Email)
+
+			if tokenString == "" {
+				returnErrorResponse(response, request, errorResponse)
+			}
+		}
+	}
 }
