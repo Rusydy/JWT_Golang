@@ -11,15 +11,17 @@ import (
 // Client is exported Mongo Database client
 var Client *mongo.Client
 
-// ConnectDatabase is used to connect the MongoDB database
+// ConnectDatabase is used the connect the MongoDB database
 func ConnectDatabase() {
-	log.Println("Database connecting...")
+	log.Println("database connecting...")
+
 	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOption := options.Client().ApplyURI("mongodb://localhost:27017")
 
 	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	client, err := mongo.Connect(context.TODO(), clientOption)
 	Client = client
+
 	if err != nil {
 		log.Fatal(err)
 	}

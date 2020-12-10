@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	log.Println("Server will start at http://localhost:8000/")
+	log.Println("Server will start at http://localhost:3000/")
 
 	ConnectDatabase()
 
@@ -17,5 +17,5 @@ func main() {
 
 	AddApproutes(route)
 
-	log.Fatal(http.ListenAndServe(":8000", route))
+	log.Fatal(http.ListenAndServe(":3000", route))
 }
