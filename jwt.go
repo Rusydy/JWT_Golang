@@ -8,7 +8,7 @@ import (
 
 var jwtSecretKey = []byte("jwt_secret_key")
 
-// CreateJWT func will used to create the JWT while signing in and signin out
+// CreateJWT func will used to create the JWT while signing in and signing out
 func CreateJWT(email string) (response string, err error) {
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
@@ -18,7 +18,7 @@ func CreateJWT(email string) (response string, err error) {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtSecretKey)
 	if err == nil {
 		return tokenString, nil
@@ -26,7 +26,7 @@ func CreateJWT(email string) (response string, err error) {
 	return "", err
 }
 
-// VerifyToken func will used to Verify the JWT Token while using APIs
+// VerifyToken func will used to Verify the JWT Token while using APIS
 func VerifyToken(tokenString string) (email string, err error) {
 	claims := &Claims{}
 
@@ -37,6 +37,5 @@ func VerifyToken(tokenString string) (email string, err error) {
 	if token != nil {
 		return claims.Email, nil
 	}
-
 	return "", err
 }
