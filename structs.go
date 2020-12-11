@@ -2,13 +2,13 @@ package main
 
 import jwt "github.com/dgrijalva/jwt-go"
 
-// ErrorResponse is a struct for sending error message with code
+// ErrorResponse is a struct for sending an error message with code.
 type ErrorResponse struct {
 	Code    int
 	Message string
 }
 
-// SuccessResponse is struct
+// SuccessResponse is a struct for sending a response message with code.
 type SuccessResponse struct {
 	Code     int
 	Message  string

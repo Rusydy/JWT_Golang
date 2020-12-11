@@ -10,24 +10,27 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func returnErrorResponse(response http.ResponseWriter, request *http.Request, errorMessage ErrorResponse) {
-	httpResponse := &ErrorResponse{Code: errorMessage.Code, Message: errorMessage.Message}
-	jsonResponse, err := json.Marshal(httpResponse)
-	if err != nil {
-		panic(err)
-	}
-
-	response.Header().Set("Content-Type", "application/json")
-	response.WriteHeader(errorMessage.Code)
-	response.Write(jsonResponse)
+// RenderHome Rendering the Home Page
+func RenderHome(response http.ResponseWriter, request *http.Request) {
+	http.ServeFile(response, request, "views/profile.html")
 }
 
-// SignInUser Used for Signin In the Users
+// RenderLogin Rendering the Login Page
+func RenderLogin(response http.ResponseWriter, request *http.Request) {
+	http.ServeFile(response, request, "views/login.html")
+}
+
+// RenderRegister Rendering the Registration Page
+func RenderRegister(response http.ResponseWriter, request *http.Request) {
+	http.ServeFile(response, request, "views/register.html")
+}
+
+// SignInUser Used for Signing In the Users
 func SignInUser(response http.ResponseWriter, request *http.Request) {
 	var loginRequest LoginParams
 	var result UserDetails
 	var errorResponse = ErrorResponse{
-		Code: http.StatusInternalServerError, Message: "Internal Server ERROR",
+		Code: http.StatusInternalServerError, Message: "Server Error",
 	}
 
 	decoder := json.NewDecoder(request.Body)
@@ -39,13 +42,13 @@ func SignInUser(response http.ResponseWriter, request *http.Request) {
 	} else {
 		errorResponse.Code = http.StatusBadRequest
 		if loginRequest.Email == "" {
-			errorResponse.Message = "Name can't be empty"
-			// it's 'actually Last Name can't empty', but maybe I'll change my mind later
+			errorResponse.Message = "Last Name can't be empty"
 			returnErrorResponse(response, request, errorResponse)
 		} else if loginRequest.Password == "" {
 			errorResponse.Message = "Password can't be empty"
 			returnErrorResponse(response, request, errorResponse)
 		} else {
+
 			collection := Client.Database("test").Collection("users")
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -89,11 +92,11 @@ func SignInUser(response http.ResponseWriter, request *http.Request) {
 	}
 }
 
-// SignUpUser Used for Singin up the User
+// SignUpUser Used for Signing up the Users
 func SignUpUser(response http.ResponseWriter, request *http.Request) {
 	var registrationRequest RegistrationParams
 	var errorResponse = ErrorResponse{
-		Code: http.StatusInternalServerError, Message: "Internal Server Error",
+		Code: http.StatusInternalServerError, Message: "Server Error",
 	}
 
 	decoder := json.NewDecoder(request.Body)
@@ -105,13 +108,13 @@ func SignUpUser(response http.ResponseWriter, request *http.Request) {
 	} else {
 		errorResponse.Code = http.StatusBadRequest
 		if registrationRequest.Name == "" {
-			errorResponse.Message = "Name can't be empty"
+			errorResponse.Message = "First Name can't be empty"
 			returnErrorResponse(response, request, errorResponse)
 		} else if registrationRequest.Email == "" {
-			errorResponse.Message = "Email can't be empty"
+			errorResponse.Message = "Last Name can't be empty"
 			returnErrorResponse(response, request, errorResponse)
 		} else if registrationRequest.Password == "" {
-			errorResponse.Message = "Password can't be empty"
+			errorResponse.Message = "Country can't be empty"
 			returnErrorResponse(response, request, errorResponse)
 		} else {
 			tokenString, _ := CreateJWT(registrationRequest.Email)
@@ -128,9 +131,10 @@ func SignUpUser(response http.ResponseWriter, request *http.Request) {
 			collection := Client.Database("test").Collection("users")
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			_, databaseErr := collection.InsertOne(ctx, bson.M{
-				"name":     registrationRequest.Name,
+
 				"email":    registrationRequest.Email,
 				"password": registrationRequest.Password,
+				"name":     registrationRequest.Name,
 			})
 			defer cancel()
 
@@ -157,15 +161,15 @@ func SignUpUser(response http.ResponseWriter, request *http.Request) {
 	}
 }
 
-// GetUserDetails used for getting the user details using user token
+// GetUserDetails Used for getting the user details using user token
 func GetUserDetails(response http.ResponseWriter, request *http.Request) {
 	var result UserDetails
 	var errorResponse = ErrorResponse{
-		Code: http.StatusInternalServerError, Message: "Internal Server Error",
+		Code: http.StatusInternalServerError, Message: "It's not you it's me.",
 	}
 
 	bearerToken := request.Header.Get("Authorization")
-	var authorizationToken = strings.Split(bearerToken, " ")[1] //?
+	var authorizationToken = strings.Split(bearerToken, " ")[1]
 
 	email, _ := VerifyToken(authorizationToken)
 
@@ -185,7 +189,7 @@ func GetUserDetails(response http.ResponseWriter, request *http.Request) {
 		} else {
 			var successResponse = SuccessResponse{
 				Code:     http.StatusOK,
-				Message:  "You're logged in successfully",
+				Message:  "You are logged in successfully",
 				Response: result.Name,
 			}
 
@@ -199,4 +203,15 @@ func GetUserDetails(response http.ResponseWriter, request *http.Request) {
 			response.Write(successJSONResponse)
 		}
 	}
+}
+
+func returnErrorResponse(response http.ResponseWriter, request *http.Request, errorMesage ErrorResponse) {
+	httpResponse := &ErrorResponse{Code: errorMesage.Code, Message: errorMesage.Message}
+	jsonResponse, err := json.Marshal(httpResponse)
+	if err != nil {
+		panic(err)
+	}
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(errorMesage.Code)
+	response.Write(jsonResponse)
 }
